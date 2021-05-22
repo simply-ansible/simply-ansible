@@ -78,9 +78,9 @@ sync () {
 
     [ $? -ne 0 ] && {
         raise "ERROR" "failed to pull. opting for a re-init."
-        return 1
+        init ($repo, $work_dir, $branch)
     }
-
+    
     [ -z ]
     git checkout $branch
 }
