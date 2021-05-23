@@ -8,7 +8,7 @@ work_dir=$3
 branch=$4
 
 raise () {
-    [ -z $2 ] && {
+    [ -z "$2" ] && {
         category=INFO
         message=$1
     } || {
@@ -17,10 +17,10 @@ raise () {
     }
     timestamp=$(date "+%Y-%m-%d %H:%M:%S")
     [ $? -ne 0 ] && {
-        printf ("WARN: 'date' was not found. opting out timestamp")
+        printf "WARN: 'date' was not found. opting out timestamp\n"
         timestamp="time unknown"
     }
-    printf "[$timestamp] $category: $message"
+    printf "[$timestamp] $category: $message\n"
 }
 
 init () {
@@ -28,7 +28,7 @@ init () {
     work_dir=$2
     branch=$3
 
-    git --recurse-submodules clone $repo $work_dir
+    git clone --recurse-submodules  $repo $work_dir
 
     [ $? -ne 0  ] && {
         raise "ERROR" "error cloning the repo"
@@ -58,7 +58,11 @@ init () {
 
 status () {
     work_dir=$1
-    cd $work_dir
+    [ -d $work_dir ] && {
+        cd $work_dir
+    } || { 
+        return 1
+    }
     git status
 
     [ $? -eq 0 ] && {
@@ -74,11 +78,11 @@ sync () {
 
     cd $work_dir
 
-    git --recurse-submodules pull origin $branch
+    git pull --recurse-submodules origin $branch
 
     [ $? -ne 0 ] && {
         raise "ERROR" "failed to pull. opting for a re-init."
-        init ($repo, $work_dir, $branch)
+        init $repo $work_dir $branch
     }
     
     [ -z ]
@@ -87,17 +91,19 @@ sync () {
 
 case $1 in
     setup)
-        status($work_dir)
+        status $work_dir
         [ $? -ne 0 ] && {
-            print "work directory is not initiated with repo...initiating."
-            init($repo, $work_dir, $branch)
+            raise "WARN" "work directory is not initiated with repo...initiating."
+            init $repo $work_dir $branch
         } || {
-            print "work directory is good...running a pull"
-            sync($work_dir, $branch)
+            raise "INFO" "work directory is good...running a pull"
+            sync $work_dir $branch
         }
         ;;
     sync)
-        sync($work_dir, $branch)
+        sync $work_dir $branch
+        ;;
+esac
 
 
 
